@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.MatchViewer.Utils">
+<TimeCreated>64455,55374.127211</TimeCreated>
+
+<Method name="Setup">
+<ClassMethod>1</ClassMethod>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit ..CreateRestWebApp()
+]]></Implementation>
+</Method>
+
+<Method name="CreateRestWebApp">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pWebAppName=""]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK, tCreated=0, tCurrentNS = $$$LOWER($namespace)
+	try {
+		set:pWebAppName="" pWebAppName = "/csp/"_tCurrentNS_"/ikREST/"
+		set tProperties("NameSpace") = tCurrentNS
+		set tProperties("DispatchClass") = "Demo.MatchViewer.RestHandler"
+		set tProperties("AutheEnabled") = $$$AutheUnauthenticated
+		//set tProperties("iKnowEnabled") = 1
+		
+		zn "%SYS"
+		if '##class(Security.Applications).Exists(pWebAppName) {
+			set tSC = ##class(Security.Applications).Create(pWebAppName, .tProperties)
+			quit:$$$ISERR(tSC)
+			set tCreated=1
+		}
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	zn tCurrentNS
+	
+	if $$$ISERR(tSC) {
+		write !,"WARNING: unable to create web application due to the following error:",!
+		do $system.OBJ.DisplayError(tSC)
+		write !,"You'll still have to create a web application '",pWebAppName,"' referring to Demo.MatchViewer.RestHandler",!
+	} elseif (tCreated) {
+		write !,"Web Application '"_pWebAppName_"' created successfully",!
+	}
+	
+	quit $$$OK
+]]></Implementation>
+</Method>
+</Class>
+</Export>

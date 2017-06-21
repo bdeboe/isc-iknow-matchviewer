@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.MatchViewer.RestHandler">
+<Description><![CDATA[
+Small extensions for regular iKnow REST API for Matching Results page
+<example language="swagger">
+swagger: '2.0'
+
+info:
+  version: "1.0.0"
+  title: iKnow REST APIs
+  description: |
+    This is the [OpenAPI Specification](https://github.com/OAI/OpenAPI-Specification) 
+    of the iKnow REST APIs, giving you RESTful access to iKnow domain contents in your system
+    Use [swagger-ui](https://github.com/swagger-api/swagger-ui/blob/master/README.md)
+    or a similar tool to conveniently browse and test these APIs.
+    For more information on iKnow, visit [intersystems.com](http://www.intersystems.com)
+
+  contact:
+    name: InterSystems
+    url: http://wrc.intersystems.com
+    email: support@intersystems.com
+
+  license:
+    name: Copyright InterSystems Corporation, all rights reserved.
+    url: http://docs.intersystems.com/latest/csp/docbook/copyright.pdf
+
+consumes:
+  - application/json
+produces:
+  - application/json
+
+
+parameters:
+  domainParam:
+    name: domain
+    type: integer
+    in: path
+    description: the ID of the domain to query
+    required: true
+
+definitions:
+  HighlightingRule:
+    description: |
+      "style" property is mandatory, then pick one selector per rule
+    type: object
+    required: ["style"]
+    properties:
+      style:
+        type: string
+        description: |
+          style specification for this highlighting rule: either a two-character 
+          sequence or a HTML tag to use for wrapping the to-be-highlighted element.
+          Use one selector per highlighting rule.
+      entities:
+        type: array
+        items:
+          type: string
+        description: <i>selector</i> - selects list of entities
+      role:
+        type: string
+        enum: ["concept", "relation", "pathRelevant", "nonRelevant" ]
+        description: <i>selector</i> - selects all entities with this role
+      attribute:
+        type: string
+        enum: ["negation", "positiveSentiment", "negativeSentiment" ]
+        description: <i>selector</i> - selects all entities affected by this attribute
+      attributeWords:
+        type: string
+        enum: ["negation", "positiveSentiment", "negativeSentiment" ]
+        description: <i>selector</i> - selects all marker terms indicating this attribute
+      anyMatch:
+        type: boolean
+        description: <i>selector</i> - selects any dictionary match
+      dictionaries:
+        type: array
+        description: <i>selector</i> - selects any dictionary match of the specified dictionary IDs
+        items:
+          type: integer
+      dictionaryItems:
+        type: array
+        description: <i>selector</i> - selects any dictionary match of the specified dictionary item IDs
+        items:
+          type: integer
+      matchType:
+        type: string
+        enum: ["full", "partial"]
+        description: |
+          refines the "anyMatch", "dictionaries" or "dictionaryItems" selectors to the designated match type
+
+  Highlighting:
+    description: array of highlighting rules
+    example:
+      [ { "style": "[]", "role": "concept" },
+        { "style": "<b>", "entities": [ "airplane", "pilot" ] } ]
+    type: array
+    items:
+      $ref: '#/definitions/HighlightingRule'
+
+</example>]]></Description>
+<Super>%iKnow.REST.Base,%iKnow.REST.Utils</Super>
+<TimeCreated>64455,54714.114205</TimeCreated>
+
+<XData name="UrlMap">
+<XMLNamespace>http://www.intersystems.com/urlmap</XMLNamespace>
+<Data><![CDATA[
+<Routes>
+<Route Url="/swagger" Method="GET" Call="GetSwagger" />
+<Route Url="/domain/:domain/matching/details/:id" Method="POST" Call="GetMatchDetails" />
+</Routes>
+]]></Data>
+</XData>
+
+<Method name="GetMatchDetails">
+<Description><![CDATA[
+<example language="swagger">
+      summary: |
+        Retrieves the details for a particular match
+      tags: ["Matching"]
+      parameters:
+        - $ref: '#/parameters/domainParam'
+        - name: id
+          description: the match ID to query for
+          in: path
+          required: true
+          type: integer
+        - name: RequestBody
+          description: JSON object with a list of query-specific arguments
+          in: body
+          schema:
+            type: object
+            properties:
+              highlight:
+                $ref: '#/definitions/Highlighting'
+              virtualSourceId:
+                description: if set, the match info will be looked up in the context of this virtual source
+                type: integer
+
+      responses:
+        200:
+          description: Successful response
+</example>]]></Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec>pDomainId:%Integer,pMatchId:%Integer</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK
+	$$$IKRESTINITDEBUG
+	try {
+		do ..ResolveDomainId(.pDomainId)
+		set vSrcId = +%request.Content.virtualSourceId
+		set tSC = ..ParseHighlight(.tHighlight)
+		quit:$$$ISERR(tSC)
+		
+		if ('vSrcId) {
+			set tMatchObj = ##class(%iKnow.Objects.DictionaryMatch).PKINDEXOpen(pDomainId, pMatchId)
+		} else {
+			set tMatchObj = ##class(%iKnow.Objects.VirtualDictionaryMatch).PKINDEXOpen(pDomainId, vSrcId, pMatchId)
+		}
+		set tResult = { "elements": [], 
+						"score": (tMatchObj.MatchScore),
+						"matchedEntityCount": (tMatchObj.MatchedEntityCount),
+						"matchedConceptCount": (tMatchObj.MatchedConceptCount),
+						"matchedRelationCount": (tMatchObj.MatchedRelationCount),
+						"negatedEntityCount": (tMatchObj.NegatedEntityCount),
+						"partialMatchCount": (tMatchObj.PartialMatchCount),
+						"ordered": (tMatchObj.IsOrdered),
+						"target": {
+							"type": ($case(tMatchObj.TargetType, $$$DMTARGETENTITY:"entity", $$$DMTARGETCRC:"crc", $$$DMTARGETPATH:"path", $$$DMTARGETSENT:"sentence")),
+							"id": (tMatchObj.TargetId)
+						},
+						"sentence": (##class(%iKnow.Queries.SentenceAPI).GetHighlighted(pDomainId, tMatchObj.Sentence.SentenceId, .tHighlight, vSrcId,, .tSC)),
+						"term": {
+							"id": (tMatchObj.DictionaryTermId),
+							"string": (tMatchObj.DictionaryTerm.String),
+							"item": {
+								"id": (tMatchObj.DictionaryItemId),
+								"uri": (tMatchObj.DictionaryItem.URI),
+								"name": (tMatchObj.DictionaryItem.Name),
+								"dictionary": {
+									"id": (tMatchObj.DictionaryId),
+									"name": (tMatchObj.Dictionary.Name)
+								}
+							}
+						}
+					}
+		
+		
+		set tSC = ##class(%iKnow.Matching.MatchingAPI).GetMatchElements(.tElements, pDomainId, pMatchId, vSrcId)
+		quit:$$$ISERR(tSC)
+		
+		set i = ""
+		for {
+			set i = $order(tElements(i), 1, tElementData) 
+			quit:i=""
+			
+			set tElementMatch = {
+					"position": ($lg(tElementData, 1)),
+					"part": { 
+						"id": ($lg(tElementData,2)),
+						"value": ($lg(tElementData,4)),
+						"role": ($case($lg(tElementData,5), $$$ENTTYPECONCEPT:"concept", $$$ENTTYPERELATION:"relation", $$$ENTTYPEPATHREL:"path-relevant", $$$ENTTYPENONREL:"non-relevant", :"undefined")),
+						"negated": ($lg(tElementData,12))
+					}, "entity": { 
+						"id": ($lg(tElementData,3)), 
+						"value": (##class(%iKnow.Queries.EntityAPI).GetValueInternal(pDomainId, $lg(tElementData,3), vSrcId))
+					}, "element": {
+						"id": ($lg(tElementData,7)),
+						"string": ($lg(tElementData,8))
+					}, 
+					"score": ($lg(tElementData,6)),
+					"mask": ($lg(tElementData,9)),
+					"scattered": ($lg(tElementData,10))
+				}
+			// fix for bit mask length!
+			for i = $l(tElementMatch.mask)+1:1:$l(tElementMatch.entity.value," ") {
+				set tElementMatch.mask = tElementMatch.mask_"0"
+			}
+			if $ld(tElementData,11,tOutput) && (tOutput'="") {
+				set tElementMatch.output = tOutput
+			}
+			do tResult.elements.%Push(tElementMatch)
+		}
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	quit ..%ProcessResult(tSC, $g(tResult))
+]]></Implementation>
+</Method>
+</Class>
+</Export>

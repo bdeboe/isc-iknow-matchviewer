@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<CSP name="MatchViewer.js" application="/csp/matching/" default="1"><![CDATA[
+var ikApp = angular.module('ikApp', ['ngSanitize']);
+
+// global params
+var debug = true;
+var pageSize = 1000;
+
+ikApp.controller('iKnowController', ['$scope', '$filter', '$compile', '$sce', function($scope, $filter, $compile, $sce) {
+
+	this.domain = $.urlParam("domain");
+    this.namespace = $.urlParam("namespace");
+    this.source = $.urlParam("source");
+	
+	this.hoverIn = function(id) {
+		$(".isc-match-"+id).toggleClass("btn-warning");
+		$(".isc-match-"+id).toggleClass("btn-success");
+	};
+	this.hoverOut = function(id) {
+		$(".isc-match-"+id).toggleClass("btn-success");
+		$(".isc-match-"+id).toggleClass("btn-warning");
+	};
+	
+	$scope.match = {};
+	this.hoverMatch
+	this.selectMatch = function(m) {
+		$scope.match = m;
+		if (debug) console.log("Selecting match",m);
+		$("#modalDetail").modal("show");
+		
+		// get full details
+		var req = { highlight: [
+				    { attribute: "negation", style: "<font class='isc-negation'>" },
+				    { dictionaryItems: [m.term.item.id], style: "<button class='btn btn-sm btn-success isc-hl' style='margin-right: 5px; padding: 1px 5px;' title='full match for \"$$$ITEM\" in \"$$$DICT\"'>"},
+				    { dictionaryItems: [m.term.item.id], matchType: "PARTIAL", style: "<button class='btn btn-sm btn-success isc-hl isc-hl-partial' style='margin-right: 5px; padding: 1px 5px;' title='partial match for \"$$$ITEM\" in \"$$$DICT\"'>"}
+					]};
+		this.post("/domain/"+this.domain+"/matching/details/"+m.id, req, function(d) {
+			$scope.match = d;
+			$scope.match.sentence = $sce.trustAsHtml(d.sentence);
+		}, true);
+	};
+	
+    
+    $scope.mResults = [];
+    this.getMatchingResults = function() {
+        this.mResults = [];
+         var req = { includeSnippets: 1, 
+         			 highlight: [
+				       { anyMatch: 1, matchType: "FULL", style: "[]" },
+				       { anyMatch: 1, matchType: "PARTIAL", style: "{}" } ] 
+				   };
+        this.post("/domain/"+this.domain+"/matching/matches/by/source/"+this.source, req, function(data) {
+            $scope.mResults = data.matches;
+            $scope.$apply();
+        });
+    };
+    
+    this.getSourceDetails = function() {
+        var req = { highlight: [
+				    { attribute: "negation", style: "<font class='isc-negation'>" },
+				    { anyMatch: 1, matchType: "FULL", style: "<button class='isc-match-$$$ID btn btn-sm btn-warning isc-hl' style='margin-right: 5px; padding: 1px 5px;' title='full match for \"$$$ITEM\" in \"$$$DICT\"'>"},
+				    { anyMatch: 1, matchType: "PARTIAL", style: "<button class='isc-match-$$$ID btn btn-sm btn-warning isc-hl isc-hl-partial' style='margin-right: 5px; padding: 1px 5px;' title='partial match for \"$$$ITEM\" in \"$$$DICT\"'>"}
+				] };
+        this.post("/domain/"+this.domain+"/sources/"+this.source+"/details", req, function(data) {
+            $scope.sourceText = $sce.trustAsHtml(data.text);
+            $scope.$apply();
+        });
+    }
+    
+    // utility functions
+    this.post = function(path, reqObj, callback, customREST=false) {
+        
+        if (customREST) {
+            var url = "/csp/"+this.namespace+"/ikREST"+path;
+        } else {
+            var url = "/api/iKnow/v1/"+this.namespace+path;
+        }
+        
+        // auto-append filter & other params
+        if (!reqObj) reqObj = {};
+        reqObj.page = 1;
+        reqObj.pageSize = pageSize;
+        reqObj.debug = true;
+        
+        if (debug) console.log("POSTing to "+url, reqObj);
+        
+        $.ajax({
+	  		url: "http://"+location.hostname+":"+location.port+url,
+	  		method: 'POST',
+	  		contentType: 'application/json; charset=UTF-8',
+	  		data: JSON.stringify(reqObj)
+	  	}).done(function(data) {
+            if (debug) console.log("RETURN from POST to "+url, data);
+            callback(data);
+        });
+    };
+    
+    // initialization
+	if ((this.domain == null) || (this.domain == '') || (this.domain == undefined)) {
+		alert("No domain specified in URL!");
+		return;
+	}
+    if ((this.namespace == null) || (this.namespace == '') || (this.namespace == undefined)) {
+        this.namespace = location.href.split("/")[4]; // best guess
+        if (debug) console.log("Assuming namespace is '"+this.namespace+"'");
+    }
+    if (this.source) { 
+        this.getMatchingResults(); 
+        this.getSourceDetails();
+    }
+}]);
+
+
+
+// utility functions
+$.urlParam = function(name, url) {
+    if (!url) {
+     url = window.location.href;
+    }
+    var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(url);
+    if (!results) { 
+        return undefined;
+    }
+    return results[1] || undefined;
+}]]></CSP>
+</Export>

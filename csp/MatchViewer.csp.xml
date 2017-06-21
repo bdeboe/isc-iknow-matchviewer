@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<CSP name="MatchViewer.csp" application="/csp/matching/" default="1"><![CDATA[
+<html ng-app="ikApp">
+<head>
+
+<title>	iKnow Matching Results Viewer </title>
+
+<script type="text/javascript" src="jquery-2.0.3.min.js"></script>
+<script type="text/javascript" src="bootstrap-3-3-5/dist/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="nglib/angular.min.js"></script>
+<script type="text/javascript" src="nglib/angular-sanitize.min.js"></script> 
+<script type="text/javascript" src="MatchingResults.js"></script>
+
+<link rel="stylesheet" type="text/css" href="bootstrap-3-3-5/dist/css/bootstrap.min.css" />
+
+<style type="text/css">
+body {
+	padding: 10px;
+}
+
+.glyphicon {
+    cursor: pointer;
+}
+
+.table tbody tr td {
+	padding: 6px;
+}
+
+.panel .table {
+	margin-bottom: 0px;
+	table-layout: fixed;
+}
+
+.panel-sm .table {
+	font-size: small;
+}
+.panel-sm .table tr td {
+	padding: 4px;
+}
+.panel-sm .panel-heading {
+	padding: 5px 10px;
+	font-size: small;
+}
+.panel-sm .panel-body {
+	padding: 5px;
+	font-size: small;
+}
+
+.table td.ik-truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.isc-negation {
+	color: firebrick;
+}
+
+.isc-hl-partial {
+	background-color: transparent;
+	color: inherit;
+}
+
+table#match-list tr {
+	cursor: pointer;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container-fluid" ng-controller="iKnowController as ik">
+
+ <!--ul class="nav nav-tabs" id="tabsMain">
+   <li class="active"><a href="#results" data-toggle="tab" aria-expanded="true">Results by source</a></li>
+   <li class=""><a href="#terms" data-toggle="tab" aria-expanded="false">Terms</a></li>>
+ </ul>
+
+
+ <div class="tab-content">
+ 
+  <div class="tab-pane" id="results" style="padding:10px;"-->
+   <div class="row">
+    <div class="col-md-6">
+     <h1>Text</h1>
+     <div ng-bind-html="sourceText"> </div>
+    </div>
+    
+    <div class="col-md-6">
+     <table id="match-list" class="table table-hover table-condensed">
+      <tr><th>Dictionary</th><th>Item</th><th>Term</th><th>Score</th></tr>
+      <tr ng-repeat="m in mResults" title="{{m.sentence}}" ng-click="ik.selectMatch(m)" ng-mouseover="ik.hoverIn(m.id)" ng-mouseout="ik.hoverOut(m.id)">
+       <td>{{m.term.item.dictionary.name}}</td>
+       <td>{{m.term.item.uri}}</td>
+       <td>{{m.term.string}}</td>
+       <td>{{m.score}}</td>
+      </tr>
+     </table>
+    </div>
+   </div>
+   
+  <!--/div> < end tab >
+ </div-->
+ 
+ <div id="modalDetail" class="modal fade">
+  <div class="modal-dialog">
+   <div class="modal-content">
+    <div class="modal-header">
+     <button type="button" class="close"  data-dismiss="modal">&times;</button>
+     <h4 class="modal-title">Match details</h4>
+    </div>
+    <div class="modal-body" style="max-height: 400px; overflow-y: auto;">
+     <p>
+      <b>Dictionary:</b> {{match.term.item.dictionary.name}}<br/>
+      <b>Item:</b> {{match.term.item.name}} ({{match.term.item.uri}})<br/>
+      <b>Term:</b> {{match.term.string}}
+     </p>
+     <p>
+      <b>Sentence:</b><br/><span ng-bind-html="match.sentence"></span>
+     </p>
+     <table class="table table-hover table-condensed">
+      <tr><th>Element</th><th>Entity</th><th>Mask</th><th>Score</th></tr>
+      <tr ng-repeat="el in match.elements" ng-class="{ 'isc-negation': el.part.negated }">
+       <td>{{el.element.string}}</td>
+       <td>{{el.entity.value}}</td>
+       <td>{{el.mask}}</td>
+       <td>{{el.score | number:2}}</td>
+      </tr>
+     </table>
+    </div>
+   </div>
+  </div>
+ </div> 
+
+</div>
+</body>
+</html>
+]]></CSP>
+</Export>
