@@ -213,7 +213,7 @@ definitions:
 					"scattered": ($lg(tElementData,10))
 				}
 			// fix for bit mask length!
-			for i = $l(tElementMatch.mask)+1:1:$l(tElementMatch.entity.value," ") {
+			for j = $l(tElementMatch.mask)+1:1:$l(tElementMatch.entity.value," ") {
 				set tElementMatch.mask = tElementMatch.mask_"0"
 			}
 			if $ld(tElementData,11,tOutput) && (tOutput'="") {
