@@ -1,4 +1,4 @@
-# isc-iknow-matchviewer
+# iKnow Match Viewer
 A sample interface for browsing match results for a given page. Compatible with 2017.1 and up (requires iKnow REST APIs).
 
 To set up the associated REST interface (extending the default iKnow one), use the following command:
