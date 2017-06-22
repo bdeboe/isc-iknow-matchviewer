@@ -10,7 +10,7 @@
 <script type="text/javascript" src="bootstrap-3-3-5/dist/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="nglib/angular.min.js"></script>
 <script type="text/javascript" src="nglib/angular-sanitize.min.js"></script> 
-<script type="text/javascript" src="MatchingResults.js"></script>
+<script type="text/javascript" src="MatchViewer.js"></script>
 
 <link rel="stylesheet" type="text/css" href="bootstrap-3-3-5/dist/css/bootstrap.min.css" />
 
