@@ -32,12 +32,18 @@ ikApp.controller('iKnowController', ['$scope', '$filter', '$compile', '$sce', fu
 		// get full details
 		var req = { highlight: [
 				    { attribute: "negation", style: "<font class='isc-negation'>" },
-				    { dictionaryItems: [m.term.item.id], style: "<button class='btn btn-sm btn-success isc-hl' style='margin-right: 5px; padding: 1px 5px;' title='full match for \"$$$ITEM\" in \"$$$DICT\"'>"},
-				    { dictionaryItems: [m.term.item.id], matchType: "PARTIAL", style: "<button class='btn btn-sm btn-success isc-hl isc-hl-partial' style='margin-right: 5px; padding: 1px 5px;' title='partial match for \"$$$ITEM\" in \"$$$DICT\"'>"}
+				    { dictionaryItems: [m.term.item.id], style: "<button class='btn btn-sm btn-success isc-hl' style='margin-right: 2px;' title='full match for \"$$$ITEM\" in \"$$$DICT\"'>"},
+				    { dictionaryItems: [m.term.item.id], matchType: "PARTIAL", style: "<button class='btn btn-sm btn-success isc-hl isc-hl-partial' style='margin-right: 2px;' title='partial match for \"$$$ITEM\" in \"$$$DICT\"'>"}
 					]};
 		this.post("/domain/"+this.domain+"/matching/details/"+m.id, req, function(d) {
 			$scope.match = d;
 			$scope.match.sentence = $sce.trustAsHtml(d.sentence);
+			for (i in $scope.match.elements) {
+				var mask = d.elements[i].mask;
+				$scope.match.elements[i].mask = $sce.trustAsHtml($scope.markupMask(mask));
+				$scope.match.elements[i].eValue = $sce.trustAsHtml($scope.markupEntity(d.elements[i].entity.value, mask));
+			}
+			$scope.$apply();
 		}, true);
 	};
 	
@@ -59,14 +65,47 @@ ikApp.controller('iKnowController', ['$scope', '$filter', '$compile', '$sce', fu
     this.getSourceDetails = function() {
         var req = { highlight: [
 				    { attribute: "negation", style: "<font class='isc-negation'>" },
-				    { anyMatch: 1, matchType: "FULL", style: "<button class='isc-match-$$$ID btn btn-sm btn-warning isc-hl' style='margin-right: 5px; padding: 1px 5px;' title='full match for \"$$$ITEM\" in \"$$$DICT\"'>"},
-				    { anyMatch: 1, matchType: "PARTIAL", style: "<button class='isc-match-$$$ID btn btn-sm btn-warning isc-hl isc-hl-partial' style='margin-right: 5px; padding: 1px 5px;' title='partial match for \"$$$ITEM\" in \"$$$DICT\"'>"}
+				    { anyMatch: 1, matchType: "FULL", style: "<button class='isc-match isc-match-$$$ID btn btn-sm btn-warning isc-hl' style='margin-right: 2px;' title='full match for \"$$$ITEM\" in \"$$$DICT\"'  isc='$$$ID'>"},
+				    { anyMatch: 1, matchType: "PARTIAL", style: "<button class='isc-match isc-match-$$$ID btn btn-sm btn-warning isc-hl isc-hl-partial' style='margin-right: 2px;' title='partial match for \"$$$ITEM\" in \"$$$DICT\"'  isc='$$$ID'>"}
 				] };
         this.post("/domain/"+this.domain+"/sources/"+this.source+"/details", req, function(data) {
             $scope.sourceText = $sce.trustAsHtml(data.text);
             $scope.$apply();
+            $('.isc-match').click(function(event) { 
+            	var id = parseInt(event.target.attributes['isc'].value.split(',')[0]);
+            	for (n in $scope.mResults) {
+	            	var m = $scope.mResults[n];
+	            	if (m.id == id) {
+		            	$('[ng-controller]').scope().ik.selectMatch(m);
+		            	break;
+	            	}
+            	}
+            });
         });
     }
+    
+    $scope.markupMask = function(bits) {
+	    var string = '';
+	    for (var i = 0; i < bits.length; i++) {
+		    if (bits.charAt(i)=='1') {
+			    string += "<font style='color: green;'>T</font>";
+		    } else {
+			    string += "<font style='color: firebrick;'>F</font>";
+		    }
+	    }
+	    return string;
+    };
+    $scope.markupEntity = function(entity, bits) {
+	    var string = ''; var words = entity.split(' ');
+	    for (var i = 0; i < bits.length; i++) {
+		    if (bits.charAt(i)=='1') {
+			    string += "<font style='color: green;'>"+words[i]+"</font> ";
+		    } else {
+			    string += "<font style='color: firebrick;'>"+words[i]+"</font> ";
+		    }
+	    }
+	    return string;
+    };
     
     // utility functions
     this.post = function(path, reqObj, callback, customREST=false) {

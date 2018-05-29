@@ -62,6 +62,11 @@ body {
 	color: inherit;
 }
 
+.btn-sm {
+	border-width: 2px;
+	padding: 0px 3px;
+}
+
 table#match-list tr {
 	cursor: pointer;
 }
@@ -71,24 +76,14 @@ table#match-list tr {
 </head>
 <body>
 
-<div class="container-fluid" ng-controller="iKnowController as ik">
-
- <!--ul class="nav nav-tabs" id="tabsMain">
-   <li class="active"><a href="#results" data-toggle="tab" aria-expanded="true">Results by source</a></li>
-   <li class=""><a href="#terms" data-toggle="tab" aria-expanded="false">Terms</a></li>>
- </ul>
-
-
- <div class="tab-content">
- 
-  <div class="tab-pane" id="results" style="padding:10px;"-->
+<div class="container" ng-controller="iKnowController as ik">
    <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-6" style="overflow-y: scroll; height: 100%;">
      <h1>Text</h1>
      <div ng-bind-html="sourceText"> </div>
     </div>
     
-    <div class="col-md-6">
+    <div class="col-md-6" style="overflow-y: scroll; height: 100%;">
      <table id="match-list" class="table table-hover table-condensed">
       <tr><th>Dictionary</th><th>Item</th><th>Term</th><th>Score</th></tr>
       <tr ng-repeat="m in mResults" title="{{m.sentence}}" ng-click="ik.selectMatch(m)" ng-mouseover="ik.hoverIn(m.id)" ng-mouseout="ik.hoverOut(m.id)">
@@ -100,9 +95,6 @@ table#match-list tr {
      </table>
     </div>
    </div>
-   
-  <!--/div> < end tab >
- </div-->
  
  <div id="modalDetail" class="modal fade">
   <div class="modal-dialog">
@@ -124,8 +116,8 @@ table#match-list tr {
       <tr><th>Element</th><th>Entity</th><th>Mask</th><th>Score</th></tr>
       <tr ng-repeat="el in match.elements" ng-class="{ 'isc-negation': el.part.negated }">
        <td>{{el.element.string}}</td>
-       <td>{{el.entity.value}}</td>
-       <td>{{el.mask}}</td>
+       <td><span ng-bind-html="el.eValue"></span></td>
+       <td><span ng-bind-html="el.mask"></span></td>
        <td>{{el.score | number:2}}</td>
       </tr>
      </table>
