@@ -46,5 +46,40 @@
 	quit $$$OK
 ]]></Implementation>
 </Method>
+
+<Method name="RemoveRestWebApp">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[&pWebAppName=""]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	set tSC = $$$OK, tDeleted=0, tCurrentNS = $$$LOWER($namespace)
+	try {
+		set:pWebAppName="" pWebAppName = "/csp/"_tCurrentNS_"/ikREST/"
+		
+		zn "%SYS"
+		if ##class(Security.Applications).Exists(pWebAppName) {
+			set tSC = ##class(Security.Applications).Delete(pWebAppName)
+			quit:$$$ISERR(tSC)
+			set tDeleted=1
+		} else {
+			write !,"INFO: '",pWebAppName,"' did not exist, nothing to delete"
+		}
+		
+	} catch (ex) {
+		set tSC = ex.AsStatus()
+	}
+	zn tCurrentNS
+	
+	if $$$ISERR(tSC) {
+		write !,"WARNING: unable to delete web application '",pWebAppName,"' due to the following error:",!
+		do $system.OBJ.DisplayError(tSC)
+		write !,"You'll still have to delete the web application manually",!
+	} elseif (tDeleted) {
+		write !,"Web Application '"_pWebAppName_"' deleted successfully",!
+	}
+	
+	quit $$$OK
+]]></Implementation>
+</Method>
 </Class>
 </Export>

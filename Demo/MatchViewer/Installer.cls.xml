@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+<Class name="Demo.MatchViewer.Installer">
+<Super>%Projection.AbstractProjection</Super>
+<TimeCreated>64797,39788.153248</TimeCreated>
+
+<Projection name="Reference">
+<Type>Installer</Type>
+</Projection>
+
+<Method name="CreateProjection">
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[cls:%String,&params]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[	quit ##class(Utils).CreateRestWebApp()
+]]></Implementation>
+</Method>
+
+<Method name="RemoveProjection">
+<Description>
+This method is invoked when a class is 'uncompiled'.</Description>
+<ClassMethod>1</ClassMethod>
+<FormalSpec><![CDATA[cls:%String,&params,recompile:%Boolean]]></FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+    return:recompile $$$OK
+    quit ##class(Utils).RemoveRestWebApp()
+]]></Implementation>
+</Method>
+</Class>
+</Export>
